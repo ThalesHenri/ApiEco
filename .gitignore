@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+env/
+venv/
+ENV/
+VENV/
+*.env
+*.venv
+
+# VSCode/PyCharm
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# SQLite (caso use em dev)
+*.sqlite3
+
+# Django
+*.log
+*.pot
+*.pyc
+*.mo
+*.db
+db.sqlite3
+media/
+staticfiles/  # se for gerado por collectstatic
+local_settings.py
+.settings/
+
+# Envs e configs sensíveis
+.env
+.env.*  # para arquivos como .env.dev, .env.prod
+*.secret
+
+# Migrations (opcional, se não quiser versionar elas no início)
+# ** ATENÇÃO: normalmente você deve versionar as migrations!
+# */migrations/
+# !*/migrations/__init__.py
+
+# Coverage e testes
+htmlcov/
+.coverage
+.tox/
+.nox/
+.cache/
+.pytest_cache/
+coverage.xml
+nosetests.xml
+test.db
+
+# REST Framework browsable API cache
+*.swagger.json
+*.swagger.yaml

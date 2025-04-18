@@ -33,7 +33,7 @@ Technologies Used
     Backend:
         Django (Python)
         Django REST Framework for API endpoints
-        PostgreSQL for the database
+       MySQL for the database
 
     Frontend:
         HTML, CSS, JavaScript
