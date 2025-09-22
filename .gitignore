@@ -1,0 +1,44 @@
+# Ambiente virtual
+venv/
+env/
+*.pyc
+__pycache__/
+
+# Arquivos do Django
+*.sqlite3
+*.log
+db.sqlite3
+*.pot
+*.py[cod]
+*.so
+*.swp
+*~
+
+# Configurações e segredos
+.env
+.env.*
+
+# Migrations (se quiser versionar, remova essa linha)
+*/migrations/__pycache__/
+*/migrations/*.pyc
+*/migrations/*.pyo
+*/migrations/*.pyd
+
+# Arquivos do VSCode e IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Cache do pip
+pip-wheel-metadata/
+__pypackages__/
+
+# Static files (se for gerado localmente)
+staticfiles/
+static/
+media/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
