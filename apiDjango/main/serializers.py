@@ -50,7 +50,7 @@ class PacoteSerializer(serializers.ModelSerializer):
 class PedidoSerializer(serializers.ModelSerializer):
     nome_pacote = serializers.CharField(source='pacote.nome_pacote', read_only=True)
     nome_vendedor = serializers.CharField(source='pacote.vendedor_id.nome_empresa', read_only=True)
-    data_compra = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True,source='data_pedido')
+    data_compra = serializers.DateTimeField(format="%Y-%m-%d %H:%M", read_only=True,source='data_pedido')
     class Meta:
         model = Pedido
         fields = '__all__'

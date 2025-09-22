@@ -73,6 +73,7 @@ class Pedido(models.Model):
     preco_total = models.DecimalField(max_digits=8, decimal_places=2)
     status_pedido = models.CharField(choices=STATUS_PEDIDO_CHOICES, max_length=20, default='Em andamento')
     data_pedido = models.DateTimeField(auto_now_add=True)
+    cobranca_id = models.CharField(max_length=255, blank=True, null=True)  # ID da cobrança no gateway
 
     def __str__(self):
         return f"Pedido #{self.pk}"
