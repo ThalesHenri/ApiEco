@@ -35,6 +35,7 @@ class Vendedor(models.Model):
     telefone = models.CharField(max_length=15,default='Sem Telefone')
     cnpj = models.CharField(max_length=20, unique=True)
     data_cadastro = models.DateTimeField(auto_now_add=True)
+    imagem = models.ImageField(upload_to='vendedores/', default='vendedores/default.png')
 
     def __str__(self):
         return self.nome_empresa
@@ -51,6 +52,8 @@ class Pacote(models.Model):
     descricao = models.TextField()
     quant_disponivel = models.IntegerField()
     categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES)
+    imagem = models.ImageField(upload_to='pacotes/', blank=True, null=True)  # Novo campo de imagem
+
 
     def __str__(self):
         return self.nome_pacote
@@ -74,7 +77,10 @@ class Pedido(models.Model):
     status_pedido = models.CharField(choices=STATUS_PEDIDO_CHOICES, max_length=20, default='Em andamento')
     data_pedido = models.DateTimeField(auto_now_add=True)
     cobranca_id = models.CharField(max_length=255, blank=True, null=True)  # ID da cobrança no gateway
-
+    init_point = models.CharField(max_length=200, blank=True, null=True)  # URL de pagamento
+    aprovado = models.BooleanField(default=False)
+    avaliado = models.BooleanField(default=False)
+    
     def __str__(self):
         return f"Pedido #{self.pk}"
 

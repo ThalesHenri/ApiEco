@@ -19,5 +19,8 @@ urlpatterns = [
     path('testePrivado/', ViewTest.as_view(), name='view-test'),
     path('registerVendedor/', VendedoresRegisterView.as_view(), name='vendedor-register'),
     path('registerComprador/', CompradoresRegisterView.as_view(), name='comprador-register'),
-    path('testePublico/', TestePublico.as_view(), name='teste-publico'),   
+    path('tespyttePublico/', TestePublico.as_view(), name='teste-publico'),   
+    path('pedidos/vendedor/<int:vendedor_id>/', PedidosVendedores.as_view(), name='pedidos-vendedor'),
 ]
+
+

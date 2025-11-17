@@ -3,6 +3,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import viewsets
+from rest_framework.parsers import MultiPartParser, FormParser
 from .models import *
 from .serializers import *
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -34,14 +35,15 @@ class PacoteViewSet(viewsets.ModelViewSet):
     queryset = Pacote.objects.all()
     serializer_class = PacoteSerializer
     permission_classes = [AllowAny] # por enquanto
+    parser_classes = [MultiPartParser, FormParser] # para upload de imagem
+
+
     def get_queryset(self):
         
         queryset = super().get_queryset()
         vendedor = self.request.query_params.get('vendedor')
-        print(vendedor)
         if vendedor:
             queryset = queryset.filter(vendedor_id=int(vendedor))
-            print(queryset)
         return queryset
 
     
@@ -70,23 +72,29 @@ class PedidoViewSet(viewsets.ModelViewSet):
                 "success": "http://127.0.0.1:8000/pagamento-sucesso/",
                 "failure": "http://127.0.0.1:8000/pagamento-falha/",
                 "pending": "http://127.0.0.1:8000/pagamento-pendente/"
+            },
+            "payer":{
+                "name":pedido.comprador.nome,
+                "email":pedido.comprador.user.email
             }
             
         }
 
         result = sdk.preference().create(preference_data)
-        print(result)
+        print(preference_data["payer"])
         if result["status"] == 201:
             pagamento_info = result["response"]
 
             # Salvar o ID da preferência no pedido
-            pedido.cobranca_id = pagamento_info["id"]  # preference_id
+            pedido.cobranca_id = pagamento_info["id"]
+            pedido.init_point = pagamento_info["init_point"]  # preference_id
             pedido.save()
 
             response_data = serializer.data
             response_data["init_point"] = pagamento_info["init_point"]  # URL checkout
             return Response(response_data, status=201)
-
+        elif result["status"] == 400:
+            return Response({"error": "Erro ao criar preferência de pagamento."}, status=400)
         return Response({"error": "Erro ao criar preferência de pagamento."}, status=400)
 
 class PagamentoViewSet(viewsets.ModelViewSet):
@@ -141,3 +149,11 @@ class TestePublico(APIView):
 
     def get(self, request):
         return Response({"msg": "acesso público OK"})
+    
+
+class PedidosVendedores(APIView):
+    permission_classes = [AllowAny]  # ajustar depois
+    def get(self, request, vendedor_id):
+        pedidos = Pedido.objects.filter(pacote__vendedor_id=vendedor_id)
+        serializer = PedidoSerializer(pedidos, many=True)
+        return Response(serializer.data)

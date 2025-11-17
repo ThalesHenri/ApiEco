@@ -13,6 +13,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # Adiciona informações customizadas ao token
         token['tipo'] = user.tipo
+        if hasattr(user, 'vendedor'):
+            token['real_id'] = user.vendedor.id
+        
+        #token['real_ID'] = user.
 
         return token
 class UserSerializer(serializers.ModelSerializer):
@@ -34,7 +38,7 @@ class VendedorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Vendedor
-        fields = ['id', 'nome_empresa', 'telefone', 'cnpj', 'user','representante']
+        fields = '__all__'
         
         
         
@@ -42,7 +46,10 @@ class PacoteSerializer(serializers.ModelSerializer):
     nome_vendedor = serializers.CharField(source='vendedor_id.nome_empresa', read_only=True)
     class Meta:
         model = Pacote
-        fields = ['id', 'vendedor_id','nome_vendedor', 'nome_pacote', 'preco', 'descricao', 'quant_disponivel', 'categoria']
+        fields = ['id', 'vendedor_id','nome_vendedor', 'nome_pacote', 'preco', 'descricao', 'quant_disponivel', 'categoria', 'imagem']
+        extra_kwargs = {
+            "imagem": {"required": False, "allow_null": True},
+        }
         
         
 
@@ -50,6 +57,9 @@ class PacoteSerializer(serializers.ModelSerializer):
 class PedidoSerializer(serializers.ModelSerializer):
     nome_pacote = serializers.CharField(source='pacote.nome_pacote', read_only=True)
     nome_vendedor = serializers.CharField(source='pacote.vendedor_id.nome_empresa', read_only=True)
+    nome_comprador = serializers.CharField(source='comprador.nome', read_only=True)
+    email_comprador = serializers.EmailField(source='comprador.user.email', read_only=True)
+    telefone_comprador = serializers.CharField(source='comprador.telefone', read_only=True)
     data_compra = serializers.DateTimeField(format="%Y-%m-%d %H:%M", read_only=True,source='data_pedido')
     class Meta:
         model = Pedido
