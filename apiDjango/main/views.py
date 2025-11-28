@@ -63,7 +63,7 @@ class PedidoViewSet(viewsets.ModelViewSet):
                 {
                     "id": str(pedido.pacote.id),
                     "title": pedido.pacote.nome_pacote,
-                    "quantity": 1,
+                    "quantity": pedido.quantidade,
                     "unit_price": float(pedido.preco_total),
                     "currency_id": "BRL",
                 }
@@ -88,8 +88,8 @@ class PedidoViewSet(viewsets.ModelViewSet):
             # Salvar o ID da preferência no pedido
             pedido.cobranca_id = pagamento_info["id"]
             pedido.init_point = pagamento_info["init_point"]  # preference_id
+            pedido.preco_total = pagamento_info["items"][0]["unit_price"] * pagamento_info["items"][0]["quantity"]
             pedido.save()
-
             response_data = serializer.data
             response_data["init_point"] = pagamento_info["init_point"]  # URL checkout
             return Response(response_data, status=201)
