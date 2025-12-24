@@ -15,11 +15,15 @@ sdk = mercadopago.SDK("APP_USR-5237973553263513-092214-250da3bfa9cecb82716a879e4
 class CompradorViewSet(viewsets.ModelViewSet):
     queryset = Comprador.objects.all()
     serializer_class = CompradorSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     
     
-class VendedorViewSet(viewsets.ModelViewSet):
+class VendedorViewSet(viewsets.ModelViewSet):   
     queryset = Vendedor.objects.all()
     serializer_class = VendedorSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     
     
     
