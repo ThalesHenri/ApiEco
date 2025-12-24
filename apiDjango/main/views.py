@@ -6,6 +6,7 @@ from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import *
 from .serializers import *
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework_simplejwt.views import TokenObtainPairView
 import mercadopago
 
@@ -18,6 +19,9 @@ class CompradorViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
+    def get_queryset(self):
+        return Comprador.objects.filter(user=self.request.user)
+    
     
 class VendedorViewSet(viewsets.ModelViewSet):   
     queryset = Vendedor.objects.all()
@@ -25,11 +29,10 @@ class VendedorViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
+    def get_queryset(self):
+        return Vendedor.objects.filter(user=self.request.user)
     
     
-class PacoteViewSet(viewsets.ModelViewSet):
-    queryset = Pacote.objects.all()
-    serializer_class = PacoteSerializer
     
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -38,30 +41,41 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class PacoteViewSet(viewsets.ModelViewSet):
     queryset = Pacote.objects.all()
     serializer_class = PacoteSerializer
-    permission_classes = [AllowAny] # por enquanto
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
     parser_classes = [MultiPartParser, FormParser] # para upload de imagem
 
 
     def get_queryset(self):
-        
-        queryset = super().get_queryset()
+        queryset = Pacote.objects.all()
         vendedor = self.request.query_params.get('vendedor')
         if vendedor:
             queryset = queryset.filter(vendedor_id=int(vendedor))
         return queryset
 
     
+from rest_framework.exceptions import PermissionDenied, ValidationError
+
 class PedidoViewSet(viewsets.ModelViewSet):
-    queryset = Pedido.objects.all()
+    queryset = Pedido.objects.all()  # ← OBRIGATÓRIO PARA O ROUTER
     serializer_class = PedidoSerializer
-    permission_classes = [AllowAny]  # ajustar depois
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        pedido = serializer.save()
+    def get_queryset(self):
+        # Retorna APENAS pedidos do usuário logado
+        return self.queryset.filter(
+            comprador__user=self.request.user
+        )
 
-        # Criação da preferência no Mercado Pago
+    def perform_create(self, serializer):
+        try:
+            comprador = Comprador.objects.get(user=self.request.user)
+        except Comprador.DoesNotExist:
+            raise PermissionDenied("Usuário não é um comprador")
+
+        pedido = serializer.save(comprador=comprador)
+
         preference_data = {
             "items": [
                 {
@@ -77,38 +91,46 @@ class PedidoViewSet(viewsets.ModelViewSet):
                 "failure": "http://127.0.0.1:8000/pagamento-falha/",
                 "pending": "http://127.0.0.1:8000/pagamento-pendente/"
             },
-            "payer":{
-                "name":pedido.comprador.nome,
-                "email":pedido.comprador.user.email
+            "payer": {
+                "name": pedido.comprador.nome,
+                "email": pedido.comprador.user.email
             }
-            
         }
 
         result = sdk.preference().create(preference_data)
-        print(preference_data["payer"])
-        if result["status"] == 201:
-            pagamento_info = result["response"]
 
-            # Salvar o ID da preferência no pedido
-            pedido.cobranca_id = pagamento_info["id"]
-            pedido.init_point = pagamento_info["init_point"]  # preference_id
-            pedido.preco_total = pagamento_info["items"][0]["unit_price"] * pagamento_info["items"][0]["quantity"]
-            pedido.save()
-            response_data = serializer.data
-            response_data["init_point"] = pagamento_info["init_point"]  # URL checkout
-            return Response(response_data, status=201)
-        elif result["status"] == 400:
-            return Response({"error": "Erro ao criar preferência de pagamento."}, status=400)
-        return Response({"error": "Erro ao criar preferência de pagamento."}, status=400)
+        if result["status"] != 201:
+            raise ValidationError({"pagamento": "Erro ao criar preferência no Mercado Pago"})
 
+        pagamento_info = result["response"]
+
+        pedido.cobranca_id = pagamento_info["id"]
+        pedido.init_point = pagamento_info["init_point"]
+        pedido.preco_total = (
+            pagamento_info["items"][0]["unit_price"] *
+            pagamento_info["items"][0]["quantity"]
+        )
+        pedido.save()
+
+        
 class PagamentoViewSet(viewsets.ModelViewSet):
     queryset = Pagamento.objects.all()
     serializer_class = PagamentoSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     
-    
+    def get_queryset(self):
+        return Pagamento.objects.filter(pedido__comprador__user=self.request.user)
+
+
 class AvaliacaoViewSet(viewsets.ModelViewSet):
     queryset = Avaliacao.objects.all()
     serializer_class = AvaliacaoSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return Avaliacao.objects.filter(pedido__comprador__user=self.request.user)
     
     
 #teste de classe protegida
